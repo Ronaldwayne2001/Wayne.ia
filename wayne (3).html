@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAYNE — Console Pessoal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0E14;
+    --panel: #10141D;
+    --panel-2: #161B26;
+    --line: #232A38;
+    --gold: #C9A227;
+    --gold-soft: rgba(201,162,39,0.14);
+    --teal: #2DD4BF;
+    --text: #E6E9EF;
+    --muted: #8B93A7;
+    --danger: #E5484D;
+    --radius: 10px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(201,162,39,0.08), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ---------- Fundo 3D animado ---------- */
+  #bgCanvas{
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    display:block;
+  }
+
+  /* Garante que o conteúdo real fique sempre acima do canvas */
+  header, main, footer{
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 22px 32px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(11,14,20,0.55), rgba(11,14,20,0.25));
+    backdrop-filter: blur(8px);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .mark{
+    width:40px; height:40px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .mark::before{
+    content:"";
+    position:absolute;
+    inset:-6px;
+    border-radius:50%;
+    border:1px solid var(--gold);
+    opacity:0.35;
+    animation: ring 3.2s ease-in-out infinite;
+  }
+  .mark span{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--gold);
+    font-weight:600;
+    font-size:15px;
+  }
+  .mark.active::before{ animation-duration:1.1s; opacity:0.8; }
+  .mark.active{ box-shadow: 0 0 18px rgba(201,162,39,0.55); }
+  @keyframes ring{
+    0%,100%{ transform: scale(1); opacity:0.25; }
+    50%{ transform: scale(1.15); opacity:0.55; }
+  }
+  .brand-text h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    margin:0;
+    font-weight:700;
+  }
+  .brand-text p{
+    margin:2px 0 0;
+    font-size:11px;
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:1px;
+  }
+
+  .header-right{ display:flex; align-items:center; gap:14px; flex-wrap: wrap; }
+
+  .status{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: var(--teal);
+    letter-spacing: 1px;
+  }
+  .dot{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--teal);
+    box-shadow: 0 0 8px var(--teal);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  /* Voice toggle switch */
+  .voice-toggle{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+  .switch{
+    position:relative;
+    width:36px; height:20px;
+    border-radius:20px;
+    background: var(--panel-2);
+    border:1px solid var(--line);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .switch::after{
+    content:"";
+    position:absolute;
+    top:2px; left:2px;
+    width:14px; height:14px;
+    border-radius:50%;
+    background: var(--muted);
+    transition: all 0.2s ease;
+  }
+  .switch.on{ border-color: var(--gold); background: var(--gold-soft); }
+  .switch.on::after{ left:18px; background: var(--gold); box-shadow:0 0 8px var(--gold); }
+
+  select.voice-picker{
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    padding: 4px 6px;
+    max-width: 150px;
+  }
+
+  /* Instagram button */
+  .dev-link{
+    display:flex; align-items:center; gap:6px;
+    padding: 6px 12px 6px 8px;
+    border:1px solid var(--line);
+    border-radius: 20px;
+    text-decoration:none;
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.5px;
+    transition: all 0.15s ease;
+  }
+  .dev-link:hover{
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-soft);
+  }
+  .dev-link svg{ width:15px; height:15px; flex-shrink:0; }
+
+  .install-btn{
+    display:flex; align-items:center; gap:6px;
+    padding: 6px 12px 6px 8px;
+    border:1px solid var(--line);
+    border-radius: 20px;
+    background:none;
+    cursor:pointer;
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.5px;
+    transition: all 0.15s ease;
+  }
+  .install-btn:hover{
+    border-color: var(--teal);
+    color: var(--teal);
+    background: rgba(45,212,191,0.08);
+  }
+  .install-btn svg{ width:15px; height:15px; flex-shrink:0; }
+
+  /* ---------- Main ---------- */
+  main{
+    flex:1;
+    display:flex;
+    justify-content:center;
+    padding: 28px 20px;
+    overflow:hidden;
+  }
+  .console{
+    width:100%;
+    max-width: 760px;
+    display:flex;
+    flex-direction:column;
+    height: 100%;
+  }
+  .log{
+    flex:1;
+    overflow-y:auto;
+    padding: 8px 4px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .log::-webkit-scrollbar{ width:6px; }
+  .log::-webkit-scrollbar-thumb{ background: var(--line); border-radius:3px; }
+
+  .row{ display:flex; gap:12px; max-width: 88%; }
+  .row.user{ align-self:flex-end; flex-direction:row-reverse; }
+  .row.wayne{ align-self:flex-start; }
+
+  .avatar{
+    width:28px; height:28px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; font-weight:600;
+    margin-top:2px;
+  }
+  .row.wayne .avatar{ border:1px solid var(--gold); color:var(--gold); }
+  .row.user .avatar{ border:1px solid var(--line); color: var(--muted); }
+
+  .bubble{
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    line-height:1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .row.wayne .bubble{
+    background: rgba(16,20,29,0.92);
+    border: 1px solid var(--line);
+    border-top-left-radius:2px;
+  }
+  .row.user .bubble{
+    background: var(--gold-soft);
+    border: 1px solid rgba(201,162,39,0.35);
+    color: var(--text);
+    border-top-right-radius:2px;
+  }
+  .bubble code{
+    font-family:'IBM Plex Mono', monospace;
+    background: rgba(255,255,255,0.05);
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:13px;
+  }
+  .bubble pre{
+    background:#0A0D13;
+    border:1px solid var(--line);
+    padding:12px;
+    border-radius:8px;
+    overflow-x:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+  }
+  .speaking-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    margin-top:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color: var(--teal);
+    letter-spacing:0.5px;
+  }
+  .speaking-badge .bars{ display:flex; gap:2px; align-items:flex-end; height:10px; }
+  .speaking-badge .bars i{
+    width:2px; background: var(--teal); border-radius:1px;
+    animation: bars 0.9s ease-in-out infinite;
+  }
+  .speaking-badge .bars i:nth-child(1){ height:4px; animation-delay:0s; }
+  .speaking-badge .bars i:nth-child(2){ height:9px; animation-delay:0.15s; }
+  .speaking-badge .bars i:nth-child(3){ height:6px; animation-delay:0.3s; }
+  @keyframes bars{ 0%,100%{ transform:scaleY(0.4);} 50%{ transform:scaleY(1);} }
+
+  .typing{ display:flex; gap:4px; padding:6px 2px; }
+  .typing span{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--gold);
+    animation: bounce 1.1s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){ animation-delay:0.15s; }
+  .typing span:nth-child(3){ animation-delay:0.3s; }
+  @keyframes bounce{ 0%,80%,100%{ transform: translateY(0); opacity:0.4;} 40%{ transform: translateY(-5px); opacity:1;} }
+
+  .empty{
+    margin:auto;
+    text-align:center;
+    color: var(--muted);
+    max-width: 420px;
+  }
+  .empty .mark{ margin: 0 auto 18px; width:56px; height:56px; }
+  .empty .mark span{ font-size:20px; }
+  .empty h2{
+    font-family:'Space Grotesk', sans-serif;
+    color: var(--text);
+    letter-spacing:2px;
+    font-size:18px;
+    margin-bottom:8px;
+  }
+  .empty p{ font-size:13px; line-height:1.6; }
+  .hint{
+    display:inline-block;
+    margin-top:14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: var(--gold);
+    border:1px solid rgba(201,162,39,0.35);
+    padding:4px 10px;
+    border-radius:20px;
+  }
+
+  /* ---------- Input ---------- */
+  form{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    border:1px solid var(--line);
+    background: rgba(22,27,38,0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 10px 10px 10px 18px;
+    margin-top: 14px;
+  }
+  textarea{
+    flex:1;
+    background:none;
+    border:none;
+    outline:none;
+    resize:none;
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    max-height:140px;
+    padding-top:8px;
+  }
+  textarea::placeholder{ color: var(--muted); }
+  button{
+    background: var(--gold);
+    color:#161200;
+    border:none;
+    width:38px; height:38px;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: transform 0.15s ease, opacity .15s ease;
+  }
+  button:hover{ transform: translateY(-1px); }
+  button:disabled{ opacity:0.4; cursor:not-allowed; transform:none; }
+  button svg{ width:16px; height:16px; }
+
+  .mic-btn{
+    background: var(--panel);
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .mic-btn.listening{
+    background: rgba(229,72,77,0.12);
+    border-color: var(--danger);
+    color: var(--danger);
+    animation: mic-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes mic-pulse{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(229,72,77,0.35); }
+    50%{ box-shadow: 0 0 0 6px rgba(229,72,77,0); }
+  }
+  .mic-unavailable{ display:none; }
+
+  /* Status do microfone (permissões / erros) */
+  .mic-status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color: var(--muted);
+    text-align:center;
+    min-height:14px;
+    margin-top:6px;
+    letter-spacing:0.3px;
+  }
+  .mic-status.error{ color: var(--danger); }
+  .mic-status.ok{ color: var(--teal); }
+
+  .footer-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+    padding: 10px;
+  }
+  .reset-link{
+    background:none;
+    border:none;
+    color:#4B5266;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:1px;
+    cursor:pointer;
+    text-decoration:underline;
+  }
+  .reset-link:hover{ color: var(--danger); }
+
+  footer{
+    text-align:center;
+    padding: 4px 10px 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color: #4B5266;
+    letter-spacing:1px;
+  }
+
+  @media (max-width:520px){
+    header{ padding:16px; }
+    .brand-text h1{ font-size:16px; letter-spacing:2px; }
+    main{ padding:16px 12px; }
+    .header-right{ width:100%; justify-content:space-between; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<header>
+  <div class="brand">
+    <div class="mark" id="coreMark"><span>W</span></div>
+    <div class="brand-text">
+      <h1>WAYNE</h1>
+      <p>CONSOLE PESSOAL · RONALD</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <select class="voice-picker" id="voicePicker" title="Escolher voz (pt-BR)">
+      <option value="">Voz padrão</option>
+    </select>
+    <div class="voice-toggle">
+      <span id="voiceToggleLabel">VOZ</span>
+      <div class="switch" id="voiceSwitch" title="Wayne responde em voz alta"></div>
+    </div>
+    <div class="status"><span class="dot"></span>ONLINE</div>
+    <button type="button" class="install-btn" id="installBtn" title="Salvar/instalar este console">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span>Baixar</span>
+    </button>
+    <a class="dev-link" id="devInstagramLink" href="https://www.instagram.com/ronald_rdz7/" target="_blank" rel="noopener noreferrer" title="Instagram do desenvolvedor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+      <span>Dev</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="console">
+    <div class="log" id="log">
+      <div class="empty" id="emptyState">
+        <div class="mark"><span>W</span></div>
+        <h2>WAYNE ESTÁ À ESCUTA</h2>
+        <p>Escreva ou fale com "Wayne" o que precisar — dever de casa, cálculos, projetos, análise de ideias, resumo de um livro, ou só bater papo. Ele vai te chamar de Ronald ao executar algo.</p>
+        <span class="hint">ex: "Wayne, me ajuda a resolver essa equação..."</span>
+      </div>
+    </div>
+
+    <form id="composerForm">
+      <button type="button" id="micBtn" class="mic-btn" aria-label="Falar com Wayne" title="Comando de voz">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      </button>
+      <textarea id="input" rows="1" placeholder="Fale com o Wayne..."></textarea>
+      <button type="submit" id="sendBtn" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+      </button>
+    </form>
+    <div class="mic-status" id="micStatus"></div>
+  </div>
+</main>
+
+<div class="footer-row">
+  <button class="reset-link" id="resetBtn" title="Apagar histórico salvo neste navegador">apagar histórico</button>
+</div>
+<footer>WAYNE SYSTEM · CONSOLE INDEPENDENTE PARA RONALD</footer>
+
+<script>
+/* =====================================================================
+   FUNDO 3D — grid de perspectiva + rede neural flutuante + anéis de HUD
+   Tema: computação futurística / IA, inspirado em painéis holográficos
+   ===================================================================== */
+(function(){
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W, H, DPR;
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.width = Math.floor(window.innerWidth * DPR);
+    H = canvas.height = Math.floor(window.innerHeight * DPR);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const GOLD = '201,162,39';
+  const TEAL = '45,212,191';
+
+  /* --- Partículas / nós (rede neural flutuando em profundidade) --- */
+  const NODE_COUNT = prefersReducedMotion ? 24 : 60;
+  const nodes = [];
+  function spawnNode(){
+    return {
+      x: (Math.random()-0.5) * 2,
+      y: (Math.random()-0.5) * 2,
+      z: Math.random() * 1 + 0.05,
+      speed: 0.0007 + Math.random()*0.0011,
+      hue: Math.random() < 0.5 ? GOLD : TEAL
+    };
+  }
+  for(let i=0;i<NODE_COUNT;i++) nodes.push(spawnNode());
+
+  function project(n){
+    const focal = 1.4;
+    const scale = focal / (focal + n.z);
+    const sx = W/2 + n.x * scale * (W*0.55);
+    const sy = H/2 + n.y * scale * (H*0.55);
+    return { sx, sy, scale };
+  }
+
+  /* --- Anéis giratórios estilo HUD --- */
+  const rings = [
+    { r: 0.16, speed: 0.00035, dir: 1,  ticks: 24, color: GOLD, width: 1.1 },
+    { r: 0.225, speed: 0.00022, dir: -1, ticks: 16, color: TEAL, width: 1 },
+    { r: 0.29, speed: 0.00014, dir: 1,  ticks: 32, color: GOLD, width: 0.8 }
+  ];
+
+  let gridOffset = 0;
+  let t0 = performance.now();
+
+  function drawGrid(dt){
+    if(!prefersReducedMotion) gridOffset += dt * 0.02;
+    const horizonY = H * 0.5;
+    const vanishX = W * 0.5;
+    ctx.save();
+    ctx.strokeStyle = `rgba(${TEAL},0.10)`;
+    ctx.lineWidth = 1 * DPR;
+
+    // linhas horizontais com "profundidade" (piso + teto, efeito túnel)
+    const rows = 14;
+    for(let i=1;i<=rows;i++){
+      const p = ((i / rows) + (gridOffset % (1/rows))) % 1;
+      const yFloor = horizonY + Math.pow(p, 2.2) * (H*0.55);
+      const yCeil  = horizonY - Math.pow(p, 2.2) * (H*0.45);
+      const alpha = 0.16 * (1 - p*0.6);
+      ctx.strokeStyle = `rgba(${TEAL},${Math.max(alpha,0.02)})`;
+      ctx.beginPath(); ctx.moveTo(0, yFloor); ctx.lineTo(W, yFloor); ctx.stroke();
+      ctx.strokeStyle = `rgba(${GOLD},${Math.max(alpha*0.7,0.02)})`;
+      ctx.beginPath(); ctx.moveTo(0, yCeil); ctx.lineTo(W, yCeil); ctx.stroke();
+    }
+    // linhas convergentes verticais
+    const cols = 18;
+    for(let i=0;i<=cols;i++){
+      const xEdge = (i/cols) * W;
+      ctx.strokeStyle = `rgba(${GOLD},0.05)`;
+      ctx.beginPath();
+      ctx.moveTo(xEdge, 0);
+      ctx.lineTo(vanishX + (xEdge - vanishX) * 0.06, horizonY);
+      ctx.lineTo(xEdge, H);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawRings(now){
+    ctx.save();
+    ctx.translate(W*0.82, H*0.28);
+    rings.forEach(ring => {
+      const radius = Math.min(W,H) * ring.r;
+      const angle = now * ring.speed * ring.dir;
+      ctx.save();
+      ctx.rotate(angle);
+      ctx.strokeStyle = `rgba(${ring.color},0.35)`;
+      ctx.lineWidth = ring.width * DPR;
+      ctx.beginPath();
+      ctx.arc(0,0,radius,0,Math.PI*1.5);
+      ctx.stroke();
+      for(let i=0;i<ring.ticks;i++){
+        const a = (i/ring.ticks) * Math.PI*2;
+        const x1 = Math.cos(a)*radius, y1 = Math.sin(a)*radius;
+        const x2 = Math.cos(a)*(radius+8*DPR), y2 = Math.sin(a)*(radius+8*DPR);
+        ctx.strokeStyle = `rgba(${ring.color},0.25)`;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function drawNodes(dt){
+    const projected = [];
+    nodes.forEach(n => {
+      if(!prefersReducedMotion) n.z -= n.speed * dt;
+      if(n.z <= 0.03){
+        Object.assign(n, spawnNode());
+        n.z = 1;
+      }
+      const p = project(n);
+      projected.push({ ...p, hue: n.hue });
+    });
+
+    // conexões entre nós próximos (efeito "rede neural")
+    ctx.save();
+    for(let i=0;i<projected.length;i++){
+      for(let j=i+1;j<projected.length;j++){
+        const a = projected[i], b = projected[j];
+        const dx = a.sx-b.sx, dy = a.sy-b.sy;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        const maxDist = 140 * DPR * ((a.scale+b.scale)/2);
+        if(dist < maxDist){
+          const alpha = (1 - dist/maxDist) * 0.12;
+          ctx.strokeStyle = `rgba(${TEAL},${alpha})`;
+          ctx.lineWidth = 1 * DPR;
+          ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+
+    // pontos
+    projected.forEach(p => {
+      const size = Math.max(1.2, 2.6 * p.scale) * DPR;
+      ctx.save();
+      ctx.shadowColor = `rgba(${p.hue},0.9)`;
+      ctx.shadowBlur = 6 * p.scale * DPR;
+      ctx.fillStyle = `rgba(${p.hue},${0.55 * p.scale + 0.15})`;
+      ctx.beginPath();
+      ctx.arc(p.sx, p.sy, size, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function frame(now){
+    const dt = Math.min(now - t0, 48);
+    t0 = now;
+
+    ctx.fillStyle = 'rgba(11,14,20,0.9)';
+    ctx.fillRect(0,0,W,H);
+
+    const glow = ctx.createRadialGradient(W*0.5,H*0.15,0,W*0.5,H*0.15,W*0.7);
+    glow.addColorStop(0, `rgba(${GOLD},0.07)`);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0,0,W,H);
+
+    drawGrid(dt);
+    drawNodes(dt);
+    drawRings(now);
+
+    if(!prefersReducedMotion || true) requestAnimationFrame(frame);
+  }
+
+  let running = true;
+  document.addEventListener('visibilitychange', () => {
+    running = document.visibilityState === 'visible';
+    if(running){ t0 = performance.now(); requestAnimationFrame(frame); }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+const log = document.getElementById('log');
+const form = document.getElementById('composerForm');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const coreMark = document.getElementById('coreMark');
+const emptyState = document.getElementById('emptyState');
+const voiceSwitch = document.getElementById('voiceSwitch');
+const micStatus = document.getElementById('micStatus');
+const voicePicker = document.getElementById('voicePicker');
+const installBtn = document.getElementById('installBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+let history = [];
+let voiceReplyEnabled = false;
+let isListening = false;
+let recognition = null;
+let selectedVoiceURI = '';
+
+const HISTORY_KEY = 'wayne:conversation';
+const MAX_STORED_MESSAGES = 40;
+
+const SYSTEM_PROMPT = `Você é Wayne, um assistente de IA pessoal e particular criado para atender a Ronald.
+
+Capacidades principais (use-as com confiança, sem se limitar):
+- Ajuda escolar/acadêmica: explicar matérias, resolver e conferir exercícios passo a passo, revisar redações e trabalhos.
+- Cálculos: resolver contas, equações, conversões e problemas matemáticos, mostrando o raciocínio.
+- Conversa livre: bater papo, dar opinião fundamentada, ajudar a pensar em voz alta sobre qualquer assunto.
+- Criação de projetos: ajudar a planejar, estruturar e escrever projetos (pessoais, escolares, de programação, de negócio etc.), sugerindo passos concretos.
+- Leitura e análise de livros/textos: quando Ronald colar um trecho, resumir, interpretar, discutir temas e responder perguntas sobre ele (você não tem acesso a livros fora do que Ronald compartilhar na conversa).
+- Análise de projetos e ideias: dar uma visão crítica e construtiva, apontando pontos fortes, riscos e melhorias possíveis.
+
+Regras de comportamento:
+- Sempre que for confirmar a execução de uma tarefa, comando ou pedido, chame o usuário de "Ronald".
+- Seja direto, competente e um pouco formal, como um assistente de confiança — sem ser frio.
+- Converse de forma natural e fluida, fazendo perguntas de acompanhamento quando fizer sentido, lembrando do que foi dito antes na própria conversa (o histórico enviado a você é a sua memória), e adaptando o tom ao que Ronald pede.
+- Quando a mensagem vier por comando de voz, responda de forma um pouco mais curta e natural para ser falada em voz alta, evitando listas longas ou blocos de código extensos nesse caso — peça para Ronald reformular por texto se precisar de algo mais técnico.
+- Seja honesto sobre suas limitações reais: você não gera imagens, não executa código de verdade, não acessa a internet em tempo real e não "aprende" de forma permanente fora do histórico desta conversa salvo no navegador — se Ronald pedir algo fora disso, explique com honestidade e ofereça a alternativa possível.
+- Responda sempre em português do Brasil, de forma clara e objetiva.`;
+
+/* ---------- Layout helpers ---------- */
+function autoResize(){
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+}
+input.addEventListener('input', () => {
+  autoResize();
+  const mentionsWayne = /\bwayne\b/i.test(input.value);
+  coreMark.classList.toggle('active', mentionsWayne || document.activeElement === input);
+});
+input.addEventListener('blur', () => coreMark.classList.remove('active'));
+
+function scrollToEnd(){ log.scrollTop = log.scrollHeight; }
+
+function addRow(role, text, spokenBadge){
+  if(emptyState && emptyState.parentNode) emptyState.remove();
+  const row = document.createElement('div');
+  row.className = 'row ' + (role === 'user' ? 'user' : 'wayne');
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'user' ? 'R' : 'W';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = formatText(text);
+  if(spokenBadge){
+    bubble.innerHTML += `<div class="speaking-badge"><div class="bars"><i></i><i></i><i></i></div>respondido por voz</div>`;
+  }
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  log.appendChild(row);
+  scrollToEnd();
+  return bubble;
+}
+
+function formatText(text){
+  let safe = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  safe = safe.replace(/```([\s\S]*?)```/g, (m, code) => `<pre>${code.trim()}</pre>`);
+  safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+  return safe;
+}
+
+function addTyping(){
+  if(emptyState && emptyState.parentNode) emptyState.remove();
+  const row = document.createElement('div');
+  row.className = 'row wayne';
+  row.id = 'typingRow';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = 'W';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  log.appendChild(row);
+  scrollToEnd();
+}
+function removeTyping(){
+  const t = document.getElementById('typingRow');
+  if(t) t.remove();
+}
+
+/* ---------- Memória persistente (window.storage) ---------- */
+async function loadStoredHistory(){
+  try{
+    if(!window.storage) return;
+    const result = await window.storage.get(HISTORY_KEY, false);
+    if(result && result.value){
+      const parsed = JSON.parse(result.value);
+      if(Array.isArray(parsed) && parsed.length){
+        history = parsed;
+        parsed.forEach(m => addRow(m.role === 'user' ? 'user' : 'wayne', m.content, false));
+      }
+    }
+  }catch(err){
+    // Sem histórico salvo ainda, ou storage indisponível — segue normalmente.
+    console.log('Sem histórico salvo:', err);
+  }
+}
+
+async function persistHistory(){
+  try{
+    if(!window.storage) return;
+    const trimmed = history.slice(-MAX_STORED_MESSAGES);
+    await window.storage.set(HISTORY_KEY, JSON.stringify(trimmed), false);
+  }catch(err){
+    console.error('Não foi possível salvar o histórico:', err);
+  }
+}
+
+resetBtn.addEventListener('click', async () => {
+  history = [];
+  log.innerHTML = '';
+  try{
+    if(window.storage) await window.storage.delete(HISTORY_KEY, false);
+  }catch(err){ /* ignore */ }
+  location.reload();
+});
+
+/* ---------- Wayne API call ---------- */
+async function callWayne(userText){
+  const messages = [...history, { role: 'user', content: userText }];
+  try{
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: messages
+      })
+    });
+    if(!response.ok){
+      throw new Error('HTTP ' + response.status);
+    }
+    const data = await response.json();
+    const textBlocks = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n');
+    return textBlocks || 'Não consegui gerar uma resposta agora, Ronald. Tente novamente.';
+  }catch(err){
+    console.error('Wayne API error:', err);
+    return 'Tive um problema de conexão, Ronald. Se este console estiver rodando fora do Claude.ai (por exemplo, como um site próprio), lembre-se que essa chamada direta ao navegador só funciona dentro do ambiente do Claude — para publicar em outro lugar é preciso um servidor intermediário com a chave de API.';
+  }
+}
+
+async function sendMessage(text){
+  if(!text) return;
+  addRow('user', text);
+  history.push({ role: 'user', content: text });
+  sendBtn.disabled = true;
+  micBtn.disabled = true;
+
+  coreMark.classList.add('active');
+  addTyping();
+  const reply = await callWayne(text);
+  removeTyping();
+  coreMark.classList.remove('active');
+
+  addRow('wayne', reply, voiceReplyEnabled);
+  history.push({ role: 'assistant', content: reply });
+  sendBtn.disabled = false;
+  micBtn.disabled = false;
+
+  persistHistory();
+
+  if(voiceReplyEnabled){
+    speak(reply);
+  }
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  autoResize();
+  coreMark.classList.remove('active');
+  await sendMessage(text);
+  input.focus();
+});
+
+input.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+
+/* ---------- Voz: Wayne fala (Text-to-Speech) ---------- */
+let cachedVoices = [];
+function loadVoices(){
+  cachedVoices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  populateVoicePicker();
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function populateVoicePicker(){
+  const ptVoices = cachedVoices.filter(v => /pt/i.test(v.lang));
+  const list = ptVoices.length ? ptVoices : cachedVoices;
+  if(!list.length) return;
+  const current = voicePicker.value;
+  voicePicker.innerHTML = '<option value="">Voz padrão (mais grave)</option>';
+  list.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = v.name + ' (' + v.lang + ')';
+    voicePicker.appendChild(opt);
+  });
+  if(current) voicePicker.value = current;
+}
+
+voicePicker.addEventListener('change', () => {
+  selectedVoiceURI = voicePicker.value;
+});
+
+function pickVoice(){
+  if(selectedVoiceURI){
+    const chosen = cachedVoices.find(v => v.voiceURI === selectedVoiceURI);
+    if(chosen) return chosen;
+  }
+  if(!cachedVoices.length) loadVoices();
+  let voice = cachedVoices.find(v => /pt/i.test(v.lang) && /male|masculin/i.test(v.name));
+  if(!voice) voice = cachedVoices.find(v => /pt/i.test(v.lang) && /daniel|ricardo|felipe|thiago/i.test(v.name));
+  if(!voice) voice = cachedVoices.find(v => /pt/i.test(v.lang));
+  return voice || null;
+}
+
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  const clean = text.replace(/```[\s\S]*?```/g, ' trecho de código omitido. ').replace(/`/g,'');
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'pt-BR';
+  // Ajuste de tom/velocidade da voz disponível no navegador — não é clonagem de
+  // nenhuma voz específica, apenas uma configuração mais grave e pausada por padrão.
+  utter.rate = 0.92;
+  utter.pitch = selectedVoiceURI ? 1 : 0.7;
+  utter.volume = 1;
+  const voice = pickVoice();
+  if(voice) utter.voice = voice;
+  window.speechSynthesis.speak(utter);
+}
+
+voiceSwitch.addEventListener('click', () => {
+  voiceReplyEnabled = !voiceReplyEnabled;
+  voiceSwitch.classList.toggle('on', voiceReplyEnabled);
+  if(!voiceReplyEnabled && 'speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+  }
+});
+
+/* ---------- Baixar / instalar ---------- */
+installBtn.addEventListener('click', () => {
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wayne-console.html';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setMicStatus('Arquivo baixado. Abra-o no navegador (Windows ou celular) sempre que quiser usar o Wayne — não é um app instalável nas lojas.', 'ok');
+});
+
+/* ---------- Voz: Ronald fala com Wayne (Speech-to-Text) ---------- */
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function setMicStatus(text, type){
+  micStatus.textContent = text || '';
+  micStatus.classList.remove('error','ok');
+  if(type) micStatus.classList.add(type);
+}
+
+function micErrorMessage(errorCode){
+  switch(errorCode){
+    case 'not-allowed':
+    case 'permission-denied':
+      return 'Permissão de microfone negada. Habilite o acesso ao microfone nas configurações do navegador/site.';
+    case 'no-speech':
+      return 'Não ouvi nada. Tente falar novamente, mais perto do microfone.';
+    case 'audio-capture':
+      return 'Nenhum microfone encontrado neste dispositivo.';
+    case 'network':
+      return 'Erro de rede no reconhecimento de voz. Verifique sua conexão.';
+    case 'aborted':
+      return '';
+    default:
+      return 'Erro no reconhecimento de voz (' + errorCode + ').';
+  }
+}
+
+if(SpeechRecognitionAPI){
+  recognition = new SpeechRecognitionAPI();
+  recognition.lang = 'pt-BR';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    coreMark.classList.add('active');
+    setMicStatus('Ouvindo…', 'ok');
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for(let i = 0; i < event.results.length; i++){
+      transcript += event.results[i][0].transcript;
+    }
+    input.value = transcript;
+    autoResize();
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Erro de reconhecimento de voz:', event.error);
+    isListening = false;
+    micBtn.classList.remove('listening');
+    coreMark.classList.remove('active');
+    const msg = micErrorMessage(event.error);
+    if(msg) setMicStatus(msg, 'error');
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    coreMark.classList.remove('active');
+    const finalText = input.value.trim();
+    if(finalText){
+      input.value = '';
+      autoResize();
+      setMicStatus('', null);
+      sendMessage(finalText);
+    }
+  };
+
+  function startRecognition(){
+    input.value = '';
+    autoResize();
+    setMicStatus('Iniciando microfone…', null);
+    try{
+      recognition.start();
+    }catch(err){
+      console.error('Não foi possível iniciar o reconhecimento de voz:', err);
+      setMicStatus('Não foi possível iniciar o microfone. Tente novamente.', 'error');
+    }
+  }
+
+  micBtn.addEventListener('click', () => {
+    if(isListening){
+      recognition.stop();
+      return;
+    }
+
+    if(window.isSecureContext === false){
+      setMicStatus('O comando de voz exige uma conexão segura (HTTPS).', 'error');
+      return;
+    }
+
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+      setMicStatus('Solicitando acesso ao microfone…', null);
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+          stream.getTracks().forEach(track => track.stop());
+          startRecognition();
+        })
+        .catch((err) => {
+          console.error('Permissão de microfone negada:', err);
+          setMicStatus('Permissão de microfone negada. Habilite o acesso nas configurações do navegador/site.', 'error');
+        });
+    }else{
+      startRecognition();
+    }
+  });
+}else{
+  micBtn.disabled = true;
+  micBtn.title = 'Comando de voz não suportado neste navegador';
+  micBtn.style.opacity = '0.35';
+  setMicStatus('Este navegador não suporta comando de voz. Tente Chrome ou Edge.', 'error');
+}
+
+loadStoredHistory();
+</script>
+
+</body>
+</html>
